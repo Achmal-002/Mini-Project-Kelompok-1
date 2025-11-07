@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 # Pastikan script berjalan di folder yang sama dengan file Excel
-os.chdir(os.path.dirname(__file__))
+os.chdir(os.path.dirname(__file__)) 
 
 # -----------------------------------------------------
 # 1. Import Data
@@ -124,3 +124,50 @@ data.columns = [
 data.to_excel("Data_Wisudawan_Final.xlsx", index=False, columns=data.columns)
 print("\n✅ File akhir berhasil dibuat: Data_Wisudawan_Final.xlsx")
 print(data)
+
+# -----------------------------------------------------
+# 10. Visualisasi Data dengan Matplotlib
+# -----------------------------------------------------
+import matplotlib.pyplot as plt
+
+# --- Grafik 1: Jumlah wisudawan per program studi ---
+plt.figure(figsize=(10, 6))
+jumlah_wisudawan = data['Program Studi'].value_counts()
+jumlah_wisudawan.plot(kind='bar', color='skyblue', edgecolor='black')
+plt.title('Jumlah Wisudawan per Program Studi', fontsize=14, fontweight='bold')
+plt.xlabel('Program Studi')
+plt.ylabel('Jumlah Wisudawan')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+
+# --- Grafik 2: Distribusi Predikat Kelulusan (Pie Chart) ---
+plt.figure(figsize=(8, 8))
+predikat_counts = data['Predikat'].value_counts()
+plt.pie(predikat_counts, labels=predikat_counts.index, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+plt.title('Distribusi Predikat Kelulusan', fontsize=14, fontweight='bold')
+plt.axis('equal')
+plt.show()
+
+# --- Grafik 3 (Opsional): Perbandingan rata-rata IPK antar Prodi ---
+plt.figure(figsize=(10, 6))
+rata_ipk = data.groupby('Program Studi')['IPK'].mean().sort_values(ascending=False)
+rata_ipk.plot(kind='bar', color='lightgreen', edgecolor='black')
+plt.title('Perbandingan Rata-rata IPK antar Program Studi', fontsize=14, fontweight='bold')
+plt.xlabel('Program Studi')
+plt.ylabel('Rata-rata IPK')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+
+# --- Grafik 4 (Nilai Plus): Sebaran IPK secara keseluruhan ---
+plt.figure(figsize=(8, 5))
+plt.hist(data['IPK'], bins=10, color='salmon', edgecolor='black')
+plt.title('Sebaran IPK Seluruh Wisudawan', fontsize=14, fontweight='bold')
+plt.xlabel('IPK')
+plt.ylabel('Jumlah Mahasiswa')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+print("\n✅ Semua grafik berhasil ditampilkan.")
