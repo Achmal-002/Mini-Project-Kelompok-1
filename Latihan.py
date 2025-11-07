@@ -93,3 +93,12 @@ print(f"→ {output_file}")
 # -----------------------------------------------------
 print("\n=== Data Setelah Dibersihkan (10 baris pertama) ===")
 print(df.head(10))
+
+
+# Penambahan Untuk Predikat, Grade
+data = pd.read_excel("Data_Wisudawan_Cleansheet.xlsx")
+data['Grade'] = ['A' if IPK >= 3.75 else 'B+' if IPK >= 3.5 else 'B' if IPK >= 3.0 else 'C' if IPK >= 2.5 else 'D' for IPK in data['IPK']]
+data['Predikat'] = ['Cumlaude' if (IPK >= 3.75 and study <= 8) else 'Sangat Memuaskan' if (IPK >= 3.5 and study <= 9)else 'Memuaskan' if IPK >= 3.0 else 'Cukup' for IPK, study in zip(data['IPK'], data['Lama Studi (Semester)'])]
+Kolom_Urutan = ['NIM','Nama Mahasiswa','Program Studi','IPK','Lama Studi (Semester)','Grade','Predikat','Tahun Wisuda']
+print(data[Kolom_Urutan])
+data.to_excel("Achmal_.xlsx", index=False, columns=Kolom_Urutan)
