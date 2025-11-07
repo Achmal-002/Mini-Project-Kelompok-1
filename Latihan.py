@@ -19,7 +19,7 @@ df['Nama Mahasiswa'] = df['Nama Mahasiswa'].astype(str).str.title().str.strip()
 
 # Tangani nilai kosong
 df['Program Studi'] = df['Program Studi'].replace('', np.nan)
-df['Ipk'] = df['Ipk'].fillna(0)
+df['IPK'] = df['IPK'].fillna(0)
 df['Lama Studi (Semester)'] = df['Lama Studi (Semester)'].fillna(0)
 
 # Hapus baris tanpa Program Studi
@@ -42,12 +42,12 @@ df['Program Studi'] = df['Program Studi'].replace({'TPPLL': 'TPPL'})
 
 # Hapus data dengan IPK = 0 (tidak valid)
 before = len(df)
-df = df[df['Ipk'] != 0]
+df = df[df['IPK'] != 0]
 after = len(df)
 print(f"Data dengan IPK = 0 dihapus: {before - after}")
 
 # Pastikan IPK valid (0–4)
-df = df[(df['Ipk'] > 0.0) & (df['Ipk'] <= 4.0)]
+df = df[(df['IPK'] > 0.0) & (df['IPK'] <= 4.0)]
 
 # Semester di luar batas (4–14) diganti NaN
 df.loc[(df['Lama Studi (Semester)'] < 4) | (df['Lama Studi (Semester)'] > 14),
