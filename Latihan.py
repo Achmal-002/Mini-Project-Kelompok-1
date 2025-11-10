@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
+# -----------------------------------------------------
 # Pastikan script berjalan di folder yang sama dengan file Excel
+# -----------------------------------------------------
 os.chdir(os.path.dirname(__file__)) 
 
 # -----------------------------------------------------
@@ -93,7 +96,12 @@ data['Predikat'] = [
 data['tahun wisuda'] = 2025
 
 # -----------------------------------------------------
-# 8. Urutkan Kolom Sesuai Format Akhir
+# 8. Tambahkan kolom Rata-rata IPK per Prodi
+# -----------------------------------------------------
+data['Rata-rata IPK Prodi'] = data.groupby('program studi')['ipk'].transform('mean').round(2)
+
+# -----------------------------------------------------
+# 9. Urutkan Kolom Sesuai Format Akhir
 # -----------------------------------------------------
 Kolom_Urutan = [
     'nim',
@@ -103,13 +111,13 @@ Kolom_Urutan = [
     kolom_lama_studi,
     'Grade',
     'Predikat',
+    'Rata-rata IPK Prodi',
     'tahun wisuda'
 ]
 
-# -----------------------------------------------------
-# 9. Simpan ke Excel
-# -----------------------------------------------------
 data = data[Kolom_Urutan]
+
+# Ganti nama kolom untuk tampilan akhir
 data.columns = [
     'NIM',
     'Nama Mahasiswa',
@@ -118,35 +126,46 @@ data.columns = [
     'Lama Studi (Semester)',
     'Grade',
     'Predikat',
+    'Rata-rata IPK Prodi',
     'Tahun Wisuda'
 ]
 
-data.to_excel("Data_Wisudawan_Final.xlsx", index=False, columns=data.columns)
+# -----------------------------------------------------
+# 10. Simpan ke Excel
+# -----------------------------------------------------
+data.to_excel("Data_Wisudawan_Final.xlsx", index=False)
 print("\n✅ File akhir berhasil dibuat: Data_Wisudawan_Final.xlsx")
+
+# -----------------------------------------------------
+# 11. Tampilkan Data di Terminal
+# -----------------------------------------------------
+print("\n📄 Data Wisudawan:")
 print(data)
 
 # -----------------------------------------------------
-# 10. Analisis Prodi dengan Cumlaude Terbanyak
+# 12. Analisis Cumlaude
 # -----------------------------------------------------
 cumlaude_per_prodi = data[data['Predikat'] == 'Cumlaude']['Program Studi'].value_counts()
-
 if not cumlaude_per_prodi.empty:
     prodi_terbanyak = cumlaude_per_prodi.idxmax()
     jumlah_terbanyak = cumlaude_per_prodi.max()
-    print(f"🎓 Program Studi dengan Cumlaude terbanyak: {prodi_terbanyak} ({jumlah_terbanyak} mahasiswa)")
+    print(f"\nProgram Studi dengan Cumlaude terbanyak: {prodi_terbanyak} ({jumlah_terbanyak} mahasiswa)")
 else:
-    print("Tidak ada mahasiswa Cumlaude pada data ini.")
+    print("\nTidak ada mahasiswa Cumlaude pada data ini.")
 
 # -----------------------------------------------------
-# 11. Visualisasi Data dengan Matplotlib
+# 13. Tampilkan Rata-rata IPK per Prodi di Terminal
 # -----------------------------------------------------
-import matplotlib.pyplot as plt
+rata_ipk_per_prodi = data.groupby('Program Studi', as_index=False)['Rata-rata IPK Prodi'].mean().round(2)
+print("\nRata-rata IPK per Program Studi:")
+print(rata_ipk_per_prodi)
 
-# --- Grafik 1: Jumlah wisudawan per program studi ---
-# --- Revisi Menjadi Warna Merah ( Diagram Batang ) ---
+# -----------------------------------------------------
+# 14. Visualisasi Data
+# -----------------------------------------------------
+# Grafik 1: Jumlah wisudawan per program studi
 plt.figure(figsize=(10, 6))
-jumlah_wisudawan = data['Program Studi'].value_counts()
-jumlah_wisudawan.plot(kind='bar', color='red', edgecolor='black')
+data['Program Studi'].value_counts().plot(kind='bar', color='red', edgecolor='black')
 plt.title('Jumlah Wisudawan per Program Studi', fontsize=14, fontweight='bold')
 plt.xlabel('Program Studi')
 plt.ylabel('Jumlah Wisudawan')
@@ -154,18 +173,18 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-# --- Grafik 2: Distribusi Predikat Kelulusan (Pie Chart) ---
+# Grafik 2: Distribusi Predikat Kelulusan
 plt.figure(figsize=(8, 8))
-predikat_counts = data['Predikat'].value_counts()
-plt.pie(predikat_counts, labels=predikat_counts.index, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+data['Predikat'].value_counts().plot(kind='pie', labels=data['Predikat'].value_counts().index,
+                                     autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
 plt.title('Distribusi Predikat Kelulusan', fontsize=14, fontweight='bold')
 plt.axis('equal')
 plt.show()
 
-# --- Grafik 3 (Opsional): Perbandingan rata-rata IPK antar Prodi ---
+# Grafik 3: Perbandingan rata-rata IPK antar Prodi
 plt.figure(figsize=(10, 6))
-rata_ipk = data.groupby('Program Studi')['IPK'].mean().sort_values(ascending=False)
-rata_ipk.plot(kind='bar', color='lightgreen', edgecolor='black')
+data.groupby('Program Studi')['Rata-rata IPK Prodi'].mean().sort_values(ascending=False).plot(
+    kind='bar', color='lightgreen', edgecolor='black')
 plt.title('Perbandingan Rata-rata IPK antar Program Studi', fontsize=14, fontweight='bold')
 plt.xlabel('Program Studi')
 plt.ylabel('Rata-rata IPK')
@@ -173,7 +192,7 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-# --- Grafik 4 (Nilai Plus): Sebaran IPK secara keseluruhan ---
+# Grafik 4: Sebaran IPK seluruh wisudawan
 plt.figure(figsize=(8, 5))
 plt.hist(data['IPK'], bins=10, color='salmon', edgecolor='black')
 plt.title('Sebaran IPK Seluruh Wisudawan', fontsize=14, fontweight='bold')
@@ -183,15 +202,15 @@ plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
 
-# --- Grafik 5 (Nilai Plus): Jumlah Cumlaude per Program Studi ---
-
-plt.figure(figsize=(10,6))
-cumlaude_per_prodi.plot(kind='bar', color='gold', edgecolor='black')
-plt.title("Jumlah Mahasiswa Cumlaude per Program Studi", fontsize=14, fontweight='bold')
-plt.xlabel("Program Studi")
-plt.ylabel("Jumlah Cumlaude")
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()  
+# Grafik 5: Jumlah Cumlaude per Program Studi
+if not cumlaude_per_prodi.empty:
+    plt.figure(figsize=(10,6))
+    cumlaude_per_prodi.plot(kind='bar', color='gold', edgecolor='black')
+    plt.title("Jumlah Mahasiswa Cumlaude per Program Studi", fontsize=14, fontweight='bold')
+    plt.xlabel("Program Studi")
+    plt.ylabel("Jumlah Cumlaude")
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
 
 print("\n✅ Semua grafik berhasil ditampilkan.")
