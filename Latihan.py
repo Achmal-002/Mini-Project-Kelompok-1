@@ -1,23 +1,26 @@
 import pandas as pd
 import numpy as np
 import os
-
-# Pastikan script berjalan di folder yang sama dengan file Excel
-os.chdir(os.path.dirname(__file__)) 
+import matplotlib.pyplot as plt
 
 # -----------------------------------------------------
-# 1. Import Data
+# 1. Pastikan file dan direktori
+# -----------------------------------------------------
+os.chdir(os.path.dirname(__file__))
+
+# -----------------------------------------------------
+# 2. Import Data
 # -----------------------------------------------------
 data = pd.read_excel("Data Wisudawan.xlsx")
 
 # -----------------------------------------------------
-# 2. Normalisasi Nama Kolom
+# 3. Normalisasi Nama Kolom
 # -----------------------------------------------------
 data.columns = data.columns.str.strip().str.lower().str.replace(r'\s+', ' ', regex=True)
 print("Nama kolom terdeteksi:", data.columns.tolist())
 
 # -----------------------------------------------------
-# 3. Bersihkan Data
+# 4. Bersihkan Data
 # -----------------------------------------------------
 data['nama mahasiswa'] = data['nama mahasiswa'].astype(str).str.title().str.strip()
 data['program studi'] = data['program studi'].replace('', np.nan)
@@ -32,7 +35,7 @@ after = len(data)
 print(f"Data tanpa Program Studi dihapus: {before - after}")
 
 # -----------------------------------------------------
-# 4. Bersihkan Typo dan Filter IPK
+# 5. Bersihkan Typo dan Filter IPK
 # -----------------------------------------------------
 before = len(data)
 data = data[~data['program studi'].str.contains("TRLP", case=False, na=False)]
@@ -50,7 +53,7 @@ data = data[(data['ipk'] > 0.0) & (data['ipk'] <= 4.0)]
 data.loc[(data[kolom_lama_studi] < 4) | (data[kolom_lama_studi] > 14), kolom_lama_studi] = np.nan
 
 # -----------------------------------------------------
-# 5. Aturan D3 dan D4
+# 6. Aturan D3 dan D4
 # -----------------------------------------------------
 before = len(data)
 data = data[~((data['program studi'].str.contains("D3", case=False)) & (data[kolom_lama_studi] > 8))]
@@ -63,7 +66,7 @@ after = len(data)
 print(f"Data D4 yang dihapus karena <8 semester: {before - after}")
 
 # -----------------------------------------------------
-# 6. Hapus Duplikat
+# 7. Hapus Duplikat
 # -----------------------------------------------------
 before = len(data)
 data = data.drop_duplicates(subset=['nim', 'nama mahasiswa'], keep='first')
@@ -71,7 +74,7 @@ after = len(data)
 print(f"Data duplikat yang dihapus: {before - after}")
 
 # -----------------------------------------------------
-# 7. Tambah Kolom Grade, Predikat, Tahun Wisuda
+# 8. Tambah Kolom Grade, Predikat, Tahun Wisuda
 # -----------------------------------------------------
 data['Grade'] = [
     'A' if IPK >= 3.75 else
@@ -90,46 +93,38 @@ data['Predikat'] = [
     for IPK, study in zip(data['ipk'], data[kolom_lama_studi])
 ]
 
-data['tahun wisuda'] = 2025
+data['Tahun Wisuda'] = 2025
+data['Rata-rata IPK Prodi'] = data.groupby('program studi')['ipk'].transform('mean').round(2)
 
 # -----------------------------------------------------
-# 8. Urutkan Kolom Sesuai Format Akhir
+# 9. Tambah Rata-rata IPK ke bagian bawah file
 # -----------------------------------------------------
-Kolom_Urutan = [
-    'nim',
-    'nama mahasiswa',
-    'program studi',
-    'ipk',
-    kolom_lama_studi,
-    'Grade',
-    'Predikat',
-    'tahun wisuda'
-]
+rata_per_prodi = (
+    data.groupby('program studi', as_index=False)['ipk']
+    .mean()
+    .round(2)
+    .rename(columns={'ipk': 'Rata-rata IPK'})
+)
+
+# Baris kosong pemisah
+baris_kosong = pd.DataFrame([[''] * len(data.columns)], columns=data.columns)
+
+# Gabungkan data utama + pemisah + ringkasan rata-rata
+rata_per_prodi.rename(columns={'program studi': 'Program Studi'}, inplace=True)
+rata_per_prodi['Keterangan'] = 'Rata-rata IPK per Prodi'
+rata_per_prodi = rata_per_prodi[['Program Studi', 'Rata-rata IPK', 'Keterangan']]
+
+# Simpan gabungan ke Excel
+with pd.ExcelWriter("Data_Wisudawan_Final.xlsx", engine='openpyxl') as writer:
+    data.to_excel(writer, index=False, sheet_name="Data Wisudawan")
+    rata_per_prodi.to_excel(writer, index=False, sheet_name="Rata-rata IPK Prodi")
+
+print("\n✅ File 'Data_Wisudawan_Final.xlsx' berhasil dibuat dan sudah termasuk ringkasan rata-rata IPK per prodi.")
 
 # -----------------------------------------------------
-# 9. Simpan ke Excel
+# 10. Analisis Cumlaude
 # -----------------------------------------------------
-data = data[Kolom_Urutan]
-data.columns = [
-    'NIM',
-    'Nama Mahasiswa',
-    'Program Studi',
-    'IPK',
-    'Lama Studi (Semester)',
-    'Grade',
-    'Predikat',
-    'Tahun Wisuda'
-]
-
-data.to_excel("Data_Wisudawan_Final.xlsx", index=False, columns=data.columns)
-print("\n✅ File akhir berhasil dibuat: Data_Wisudawan_Final.xlsx")
-print(data)
-
-# -----------------------------------------------------
-# 10. Analisis Prodi dengan Cumlaude Terbanyak
-# -----------------------------------------------------
-cumlaude_per_prodi = data[data['Predikat'] == 'Cumlaude']['Program Studi'].value_counts()
-
+cumlaude_per_prodi = data[data['Predikat'] == 'Cumlaude']['program studi'].value_counts()
 if not cumlaude_per_prodi.empty:
     prodi_terbanyak = cumlaude_per_prodi.idxmax()
     jumlah_terbanyak = cumlaude_per_prodi.max()
@@ -138,14 +133,10 @@ else:
     print("Tidak ada mahasiswa Cumlaude pada data ini.")
 
 # -----------------------------------------------------
-# 11. Visualisasi Data dengan Matplotlib
+# 11. Visualisasi Data
 # -----------------------------------------------------
-import matplotlib.pyplot as plt
-
-# --- Grafik 1: Jumlah wisudawan per program studi ---
 plt.figure(figsize=(10, 6))
-jumlah_wisudawan = data['Program Studi'].value_counts()
-jumlah_wisudawan.plot(kind='bar', color='skyblue', edgecolor='black')
+data['program studi'].value_counts().plot(kind='bar', color='red', edgecolor='black')
 plt.title('Jumlah Wisudawan per Program Studi', fontsize=14, fontweight='bold')
 plt.xlabel('Program Studi')
 plt.ylabel('Jumlah Wisudawan')
@@ -153,7 +144,6 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-# --- Grafik 2: Distribusi Predikat Kelulusan (Pie Chart) ---
 plt.figure(figsize=(8, 8))
 predikat_counts = data['Predikat'].value_counts()
 plt.pie(predikat_counts, labels=predikat_counts.index, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
@@ -161,9 +151,8 @@ plt.title('Distribusi Predikat Kelulusan', fontsize=14, fontweight='bold')
 plt.axis('equal')
 plt.show()
 
-# --- Grafik 3 (Opsional): Perbandingan rata-rata IPK antar Prodi ---
 plt.figure(figsize=(10, 6))
-rata_ipk = data.groupby('Program Studi')['IPK'].mean().sort_values(ascending=False)
+rata_ipk = data.groupby('program studi')['ipk'].mean().sort_values(ascending=False)
 rata_ipk.plot(kind='bar', color='lightgreen', edgecolor='black')
 plt.title('Perbandingan Rata-rata IPK antar Program Studi', fontsize=14, fontweight='bold')
 plt.xlabel('Program Studi')
@@ -172,9 +161,8 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-# --- Grafik 4 (Nilai Plus): Sebaran IPK secara keseluruhan ---
 plt.figure(figsize=(8, 5))
-plt.hist(data['IPK'], bins=10, color='salmon', edgecolor='black')
+plt.hist(data['ipk'], bins=10, color='salmon', edgecolor='black')
 plt.title('Sebaran IPK Seluruh Wisudawan', fontsize=14, fontweight='bold')
 plt.xlabel('IPK')
 plt.ylabel('Jumlah Mahasiswa')
@@ -182,15 +170,13 @@ plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
 
-# --- Grafik 5 (Nilai Plus): Jumlah Cumlaude per Program Studi ---
-
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(10, 6))
 cumlaude_per_prodi.plot(kind='bar', color='gold', edgecolor='black')
 plt.title("Jumlah Mahasiswa Cumlaude per Program Studi", fontsize=14, fontweight='bold')
 plt.xlabel("Program Studi")
 plt.ylabel("Jumlah Cumlaude")
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
-plt.show()  
+plt.show()
 
 print("\n✅ Semua grafik berhasil ditampilkan.")
