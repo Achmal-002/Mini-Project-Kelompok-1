@@ -134,9 +134,12 @@ else:
 
 # -----------------------------------------------------
 # 11. Visualisasi Data
-# -----------------------------------------------------
+# ----------------------------------------------------
+# --- Grafik 1: Jumlah wisudawan per program studi ---
+# --- Revisi Menjadi Warna Merah ( Diagram Batang ) ---
 plt.figure(figsize=(10, 6))
-data['program studi'].value_counts().plot(kind='bar', color='red', edgecolor='black')
+jumlah_wisudawan = data['Program Studi'].value_counts()
+jumlah_wisudawan.plot(kind='bar', color='red', edgecolor='black')
 plt.title('Jumlah Wisudawan per Program Studi', fontsize=14, fontweight='bold')
 plt.xlabel('Program Studi')
 plt.ylabel('Jumlah Wisudawan')
