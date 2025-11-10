@@ -126,7 +126,19 @@ print("\n✅ File akhir berhasil dibuat: Data_Wisudawan_Final.xlsx")
 print(data)
 
 # -----------------------------------------------------
-# 10. Visualisasi Data dengan Matplotlib
+# 10. Analisis Prodi dengan Cumlaude Terbanyak
+# -----------------------------------------------------
+cumlaude_per_prodi = data[data['Predikat'] == 'Cumlaude']['Program Studi'].value_counts()
+
+if not cumlaude_per_prodi.empty:
+    prodi_terbanyak = cumlaude_per_prodi.idxmax()
+    jumlah_terbanyak = cumlaude_per_prodi.max()
+    print(f"🎓 Program Studi dengan Cumlaude terbanyak: {prodi_terbanyak} ({jumlah_terbanyak} mahasiswa)")
+else:
+    print("Tidak ada mahasiswa Cumlaude pada data ini.")
+
+# -----------------------------------------------------
+# 11. Visualisasi Data dengan Matplotlib
 # -----------------------------------------------------
 import matplotlib.pyplot as plt
 
@@ -169,5 +181,17 @@ plt.ylabel('Jumlah Mahasiswa')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
+
+# --- Grafik 5 (Nilai Plus): Jumlah Cumlaude per Program Studi ---
+
+plt.figure(figsize=(10,6))
+cumlaude_per_prodi.plot(kind='bar', color='gold', edgecolor='black')
+plt.title("Jumlah Mahasiswa Cumlaude per Program Studi", fontsize=14, fontweight='bold')
+plt.xlabel("Program Studi")
+plt.ylabel("Jumlah Cumlaude")
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()  
+
 
 print("\n✅ Semua grafik berhasil ditampilkan.")
