@@ -143,9 +143,10 @@ else:
 import matplotlib.pyplot as plt
 
 # --- Grafik 1: Jumlah wisudawan per program studi ---
+# --- Revisi Menjadi Warna Merah ( Diagram Batang ) ---
 plt.figure(figsize=(10, 6))
 jumlah_wisudawan = data['Program Studi'].value_counts()
-jumlah_wisudawan.plot(kind='bar', color='skyblue', edgecolor='black')
+jumlah_wisudawan.plot(kind='bar', color='red', edgecolor='black')
 plt.title('Jumlah Wisudawan per Program Studi', fontsize=14, fontweight='bold')
 plt.xlabel('Program Studi')
 plt.ylabel('Jumlah Wisudawan')
